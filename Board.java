@@ -1,0 +1,255 @@
+package Lab4.ConnectFour;
+
+import java.util.*;
+
+public class Board {
+    private final Piece[][] board;
+
+    public Board(int x, int y) {
+        this.board = new Piece[x][y];
+
+        for (Piece[] pieces : this.board) {
+            Arrays.fill(pieces, Piece.NONE);
+        }
+    }
+
+    public Board(Board board) {
+        this.board = cloneBoard(board.board);
+    }
+
+    private Piece[][] cloneBoard(Piece[][] board) {
+        Piece[][] temp = board.clone();
+
+        for(int i = 0; i < temp.length; i++) {
+            temp[i] = temp[i].clone();
+        }
+
+        return temp;
+    }
+
+    public void displayBoard() {
+        for (int i = board.length - 2; i >= 0; i--) {
+            for (Piece[] pieces : board) {
+                if (pieces[i] == Piece.PLAYER) {
+                    System.out.print("P ");
+                } else if (pieces[i] == Piece.AI) {
+                    System.out.print("A ");
+                } else {
+                    System.out.print("X ");
+                }
+            }
+
+            System.out.println();
+        }
+    }
+
+    public boolean canPlace(int pos) {
+        if (pos > board.length - 1) return false;
+
+        for (int i = 0; i < board[pos].length; i++) {
+            if (board[pos][i] == Piece.NONE) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public void placePiece(int pos, Piece player) {
+        for (int i = 0; i < board[pos].length; i++) {
+            if (board[pos][i] == Piece.NONE) {
+                board[pos][i] = player;
+                break;
+            }
+        }
+    }
+
+    private int findPos(int pos) {
+        for (int i = 0; i < board[pos].length; i++) {
+            if (board[pos][i] == Piece.NONE) {
+                return i;
+            }
+        }
+
+        return board[0].length;
+    }
+
+    private boolean isFilledAt(int row, int col, Piece player) {
+        if (row < 0 || row >= board.length || col < 0 || col >= board[0].length) {
+            return false;
+        }
+
+        return board[row][col] == player;
+    }
+
+    public boolean areFourConnected(Piece player) {
+        // check vertical
+        int pieces = 4;
+
+        for (int i = 0; i < board.length; i++) {
+            for (int j = 0; j < board[i].length; j++) {
+                int num = 0;
+
+                for (int k = 0; k < pieces; k++) {
+                    if (isFilledAt(i + k, j, player)) {
+                        num += 1;
+                    }
+                }
+
+                if (num == pieces) return true;
+            }
+        }
+
+        // check horizontal
+        for (int i = 0; i < board.length; i++) {
+            for (int j = 0; j < board[i].length; j++) {
+                int num = 0;
+
+                for (int k = 0; k < pieces; k++) {
+                    if (isFilledAt(i, j + k, player)) {
+                        num += 1;
+                    }
+                }
+
+                if (num == pieces) return true;
+            }
+        }
+
+        // check ascending diagonal
+        for (int i = 0; i < board.length; i++) {
+            for (int j = 0; j < board[i].length; j++) {
+                int num = 0;
+
+                for (int k = 0; k < pieces; k++) {
+                    if (isFilledAt(i - k, j + k, player)) {
+                        num += 1;
+                    }
+                }
+
+                if (num == pieces) return true;
+            }
+        }
+
+        // check descending diagonal
+        for (int i = 0; i < board.length; i++) {
+            for (int j = 0; j < board[i].length; j++) {
+                int num = 0;
+
+                for (int k = 0; k < pieces; k++) {
+                    if (isFilledAt(i - k, j - k, player)) {
+                        num += 1;
+                    }
+                }
+
+                if (num == pieces) return true;
+            }
+        }
+
+        return false;
+    }
+
+    public int[] getScore(int pos, Piece player) {
+        Piece opponent = player == Piece.PLAYER ? Piece.AI : Piece.PLAYER;
+        int score = 0;
+
+        // center column: +4 points
+        if (pos == 3 && canPlace(pos)) score += 4;
+
+        // lines of three: +5 points
+        if (checkLinesOfThree(pos, player)) score += 3;
+        // lines of two: +2 points
+        else if (checkLinesOfTwo(pos, player)) score += 2;
+
+        if (areFourConnected(player)) score += 1000;
+
+        // opp. lines of three: -100 points
+        if(checkLinesOfThree(pos, opponent)) score -= 100;
+        // opp. lines of two: -2 points
+        else if(checkLinesOfTwo(pos, opponent)) score -= 2;
+
+        return new int[]{pos, score};
+    }
+
+    private boolean checkLinesOfTwo(int pos, Piece player) {
+        Piece opponent = player == Piece.PLAYER ? Piece.AI : Piece.PLAYER;
+
+        // check down
+        if (findPos(pos) - 2 >= 0 &&
+                board[pos][findPos(pos) - 2] == player &&
+                board[pos][findPos(pos) - 1] == player)
+            return true;
+
+        // check left
+        boolean hasLeftOpponent = false;
+
+        for (int i = pos - 1; i >= Math.max(0, pos - 3); i--) {
+            if (board[i][findPos(pos) - 1] == opponent) {
+                hasLeftOpponent = true;
+            } else if (board[i][findPos(pos) - 1] == player) {
+                if (!hasLeftOpponent) {
+                    return true;
+                }
+            }
+        }
+
+        // check right
+        boolean hasRightOpponent = false;
+
+        for (int i = pos + 1; i < Math.min(board.length, pos + 3); i++) {
+            if (board[i][findPos(pos) - 1] == opponent) {
+                hasRightOpponent = true;
+            } else if (board[i][findPos(pos) - 1] == player) {
+                if (!hasRightOpponent) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private boolean checkLinesOfThree(int pos, Piece player) {
+        Piece opponent = player == Piece.PLAYER ? Piece.AI : Piece.PLAYER;
+
+        // check down
+        if (findPos(pos) - 3 >= 0 &&
+                board[pos][findPos(pos) - 3] == player &&
+                board[pos][findPos(pos) - 2] == player &&
+                board[pos][findPos(pos) - 1] == player)
+            return true;
+
+        // check left
+        boolean hasLeftOpponent = false;
+        int leftCounter = 1;
+
+        for (int i = pos - 1; i >= Math.max(0, pos - 3); i--) {
+            if (board[i][findPos(pos) - 1] == opponent) {
+                hasLeftOpponent = true;
+            } else if (board[i][findPos(pos) - 1] == player) {
+                if (!hasLeftOpponent) {
+                    leftCounter += 1;
+                }
+            }
+        }
+
+        if(leftCounter >= 3) return true;
+
+        // check right
+        boolean hasRightOpponent = false;
+        int rightCounter = 1;
+
+        for (int i = pos + 1; i < Math.min(board.length, pos + 3); i++) {
+            if (board[i][findPos(pos) - 1] == opponent) {
+                hasRightOpponent = true;
+            } else if (board[i][findPos(pos) - 1] == player) {
+                if (!hasRightOpponent) {
+                    rightCounter += 1;
+                }
+            }
+        }
+
+        if(rightCounter >= 3) return true;
+
+        return false;
+    }
+}
