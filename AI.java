@@ -1,5 +1,8 @@
 package Lab4.ConnectFour;
 
+import java.util.Arrays;
+import java.util.Random;
+
 public class AI {
     private final int depth;
 
@@ -9,6 +12,7 @@ public class AI {
 
     private int[] minimax(Board board, int depth, int pos, boolean maximisingPlayer) {
         Piece player = maximisingPlayer ? Piece.AI : Piece.PLAYER;
+        int[] validLocations = board.getValidLocations();
 
         if(depth == 0) {
             Board tempBoard = new Board(board);
@@ -16,10 +20,10 @@ public class AI {
         }
 
         if(maximisingPlayer) {
-            int column = pos;
+            int column = validLocations[new Random().nextInt(validLocations.length)];
             int maxEval = Integer.MIN_VALUE;
 
-            for(int i = 0; i < 7; i++) {
+            for(int i : validLocations) {
                 Board tempBoard = new Board(board);
                 tempBoard.placePiece(i, player);
                 int eval = minimax(tempBoard, depth - 1, i, false)[1];
@@ -32,10 +36,10 @@ public class AI {
 
             return new int[]{column, maxEval};
         } else {
-            int column = pos;
+            int column = validLocations[new Random().nextInt(validLocations.length)];
             int minEval = Integer.MAX_VALUE;
 
-            for(int i = 0; i < 7; i++) {
+            for(int i : validLocations) {
                 Board tempBoard = new Board(board);
                 tempBoard.placePiece(i, player);
                 int eval = minimax(tempBoard, depth - 1, i, true)[1];

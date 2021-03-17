@@ -5,6 +5,10 @@ import java.util.*;
 public class Board {
     private final Piece[][] board;
 
+    private final String ANSI_RED = "\u001B[31m";
+    private final String ANSI_BLUE = "\u001B[34m";
+    private final String ANSI_RESET = "\u001B[0m";
+
     public Board(int x, int y) {
         this.board = new Piece[x][y];
 
@@ -31,15 +35,15 @@ public class Board {
         for (int i = board.length - 2; i >= 0; i--) {
             for (Piece[] pieces : board) {
                 if (pieces[i] == Piece.PLAYER) {
-                    System.out.print("P ");
+                    System.out.print(ANSI_BLUE + "P " + ANSI_BLUE);
                 } else if (pieces[i] == Piece.AI) {
-                    System.out.print("A ");
+                    System.out.print(ANSI_RED + "A " + ANSI_RED);
                 } else {
-                    System.out.print("X ");
+                    System.out.print(ANSI_RESET + "X " + ANSI_RESET);
                 }
             }
 
-            System.out.println();
+            System.out.println(ANSI_RESET);
         }
     }
 
@@ -251,5 +255,17 @@ public class Board {
         if(rightCounter >= 3) return true;
 
         return false;
+    }
+
+    public int[] getValidLocations() {
+        List<Integer> validLocations = new ArrayList<>();
+
+        for(int i = 0; i < board.length; i++) {
+            if(canPlace(i)) {
+                validLocations.add(i);
+            }
+        }
+
+        return validLocations.stream().mapToInt(i -> i).toArray();
     }
 }
