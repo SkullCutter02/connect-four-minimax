@@ -45,6 +45,8 @@ public class Board {
 
             System.out.println(ANSI_RESET);
         }
+
+        System.out.println("0 1 2 3 4 5 6");
     }
 
     public boolean canPlace(int pos) {
@@ -160,28 +162,31 @@ public class Board {
         if (pos == 3 && canPlace(pos)) score += 4;
 
         // lines of three: +5 points
-        if (checkLinesOfThree(pos, player)) score += 3;
+        score += checkLinesOfThree(pos, player) * 5;
         // lines of two: +2 points
-        else if (checkLinesOfTwo(pos, player)) score += 2;
+        score += checkLinesOfTwo(pos, player) * 2;
 
         if (areFourConnected(player)) score += 1000;
 
         // opp. lines of three: -100 points
-        if(checkLinesOfThree(pos, opponent)) score -= 100;
+        score -= checkLinesOfThree(pos, opponent) * 100;
         // opp. lines of two: -2 points
-        else if(checkLinesOfTwo(pos, opponent)) score -= 2;
+        score -= checkLinesOfTwo(pos, opponent) * 2;
+
+        if(areFourConnected(opponent)) score -= 1000;
 
         return new int[]{pos, score};
     }
 
-    private boolean checkLinesOfTwo(int pos, Piece player) {
+    private int checkLinesOfTwo(int pos, Piece player) {
         Piece opponent = player == Piece.PLAYER ? Piece.AI : Piece.PLAYER;
+        int score = 0;
 
         // check down
         if (findPos(pos) - 2 >= 0 &&
                 board[pos][findPos(pos) - 2] == player &&
                 board[pos][findPos(pos) - 1] == player)
-            return true;
+            score += 1;
 
         // check left
         boolean hasLeftOpponent = false;
@@ -191,7 +196,7 @@ public class Board {
                 hasLeftOpponent = true;
             } else if (board[i][findPos(pos) - 1] == player) {
                 if (!hasLeftOpponent) {
-                    return true;
+                    score += 1;
                 }
             }
         }
@@ -204,23 +209,24 @@ public class Board {
                 hasRightOpponent = true;
             } else if (board[i][findPos(pos) - 1] == player) {
                 if (!hasRightOpponent) {
-                    return true;
+                    score += 1;
                 }
             }
         }
 
-        return false;
+        return score;
     }
 
-    private boolean checkLinesOfThree(int pos, Piece player) {
+    private int checkLinesOfThree(int pos, Piece player) {
         Piece opponent = player == Piece.PLAYER ? Piece.AI : Piece.PLAYER;
+        int score = 0;
 
         // check down
         if (findPos(pos) - 3 >= 0 &&
                 board[pos][findPos(pos) - 3] == player &&
                 board[pos][findPos(pos) - 2] == player &&
                 board[pos][findPos(pos) - 1] == player)
-            return true;
+            score += 1;
 
         // check left
         boolean hasLeftOpponent = false;
@@ -236,7 +242,7 @@ public class Board {
             }
         }
 
-        if(leftCounter >= 3) return true;
+        if(leftCounter >= 3) score += 1;
 
         // check right
         boolean hasRightOpponent = false;
@@ -252,9 +258,9 @@ public class Board {
             }
         }
 
-        if(rightCounter >= 3) return true;
+        if(rightCounter >= 3) score += 1;
 
-        return false;
+        return score;
     }
 
     public int[] getValidLocations() {

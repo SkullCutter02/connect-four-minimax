@@ -1,7 +1,6 @@
 package Lab4.ConnectFour;
 
-import java.util.Arrays;
-import java.util.Random;
+import java.util.*;
 
 public class AI {
     private final int depth;
@@ -10,13 +9,18 @@ public class AI {
         this.depth = depth;
     }
 
-    private int[] minimax(Board board, int depth, int pos, boolean maximisingPlayer) {
+    private int[] minimax(Board board, int depth, int pos, int alpha, int beta, boolean maximisingPlayer) {
         Piece player = maximisingPlayer ? Piece.AI : Piece.PLAYER;
         int[] validLocations = board.getValidLocations();
 
         if(depth == 0) {
-            Board tempBoard = new Board(board);
-            return tempBoard.getScore(pos, player);
+            if(board.areFourConnected(Piece.AI) || board.areFourConnected(Piece.PLAYER) || board.getValidLocations().length == 0) {
+                if(board.areFourConnected(Piece.AI)) return new int[]{Integer.MIN_VALUE, Integer.MAX_VALUE};
+                else if(board.areFourConnected(Piece.PLAYER)) return new int[]{Integer.MIN_VALUE, Integer.MIN_VALUE};
+                else if(board.getValidLocations().length == 0) return new int[]{Integer.MIN_VALUE, 0};
+            } else {
+                return board.getScore(pos, Piece.AI);
+            }
         }
 
         if(maximisingPlayer) {
@@ -26,12 +30,15 @@ public class AI {
             for(int i : validLocations) {
                 Board tempBoard = new Board(board);
                 tempBoard.placePiece(i, player);
-                int eval = minimax(tempBoard, depth - 1, i, false)[1];
+                int eval = minimax(tempBoard, depth - 1, i, alpha, beta, false)[1];
 
                 if(eval > maxEval) {
                     column = i;
                     maxEval = eval;
                 }
+
+                alpha = Math.max(alpha, maxEval);
+                if(alpha >= beta) break;
             }
 
             return new int[]{column, maxEval};
@@ -42,12 +49,15 @@ public class AI {
             for(int i : validLocations) {
                 Board tempBoard = new Board(board);
                 tempBoard.placePiece(i, player);
-                int eval = minimax(tempBoard, depth - 1, i, true)[1];
+                int eval = minimax(tempBoard, depth - 1, i, alpha, beta, true)[1];
 
                 if(eval < minEval) {
                     column = i;
                     minEval = eval;
                 }
+
+                beta = Math.min(beta, minEval);
+                if(alpha >= beta) break;
             }
 
             return new int[]{column, minEval};
@@ -55,6 +65,6 @@ public class AI {
     }
 
     public int[] getBestMovePos(Board board) {
-        return minimax(board, depth, 0, true);
+        return minimax(board, depth, 0, Integer.MIN_VALUE, Integer.MAX_VALUE, true);
     }
 }
